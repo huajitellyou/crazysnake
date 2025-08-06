@@ -12,9 +12,10 @@
     <div class="game-container">...</div>
     
     <!-- 脚本按依赖顺序加载 -->
-    <script src="js/settings.js"></script>
-    <script src="js/input.js"></script>
-    <script src="js/drawing.js"></script>
-    <script src="js/game.js"></script>
+<!-- 正确顺序：基础模块优先，核心逻辑最后 -->
+<script src="js/settings.js" defer></script>  <!-- 配置管理 -->
+<script src="js/drawing.js" defer></script>   <!-- 渲染模块 -->
+<script src="js/input.js" defer></script>     <!-- 控制模块 -->
+<script src="js/game.js" defer></script>     <!-- 核心逻辑 -->
 </body>
 </html>
