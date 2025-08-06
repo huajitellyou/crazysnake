@@ -6,16 +6,159 @@
     <title>高级贪吃蛇游戏</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* 保底样式 - 确保即使CSS加载失败也能显示内容 */
+        body {
+            font-family: sans-serif;
+            background: #1a2a6c;
+            color: white;
+            padding: 20px;
+        }
+        .game-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        canvas {
+            border: 2px solid white;
+        }
+    </style>
 </head>
 <body>
-    <div class="header">...</div>
-    <div class="game-container">...</div>
+    <div class="header">
+        <h1><i class="fas fa-snake"></i> 高级贪吃蛇游戏 <i class="fas fa-apple-alt"></i></h1>
+        <p>使用方向键控制蛇的移动，吃到食物增长身体，避免撞墙或撞到自己！</p>
+    </div>
     
-    <!-- 脚本按依赖顺序加载 -->
-<!-- 正确顺序：基础模块优先，核心逻辑最后 -->
-<script src="js/settings.js" defer></script>  <!-- 配置管理 -->
-<script src="js/drawing.js" defer></script>   <!-- 渲染模块 -->
-<script src="js/input.js" defer></script>     <!-- 控制模块 -->
-<script src="js/game.js" defer></script>     <!-- 核心逻辑 -->
+    <div class="game-container">
+        <div class="stats-panel">
+            <div class="stat-box">
+                <h3>当前得分</h3>
+                <div id="score" class="stat-value">0</div>
+            </div>
+            <div class="stat-box">
+                <h3>当前速度</h3>
+                <div id="speed" class="stat-value">5</div>
+            </div>
+            <div class="stat-box">
+                <h3>身体长度</h3>
+                <div id="length" class="stat-value">3</div>
+            </div>
+        </div>
+        
+        <div class="canvas-container">
+            <canvas id="gameCanvas"></canvas>
+            <div class="game-over" id="gameOver">
+                <h2>游戏结束!</h2>
+                <p>你的得分: <span id="finalScore">0</span></p>
+                <button class="btn reset" id="restartBtn">重新开始</button>
+            </div>
+        </div>
+        
+        <div class="controls">
+            <button class="btn" id="startBtn"><i class="fas fa-play"></i> 开始游戏</button>
+            <button class="btn pause" id="pauseBtn"><i class="fas fa-pause"></i> 暂停</button>
+            <button class="btn reset" id="resetBtn"><i class="fas fa-redo"></i> 重新开始</button>
+            
+            <div class="switch-container">
+                <span>加速模式:</span>
+                <label class="switch">
+                    <input type="checkbox" id="speedToggle" checked>
+                    <span class="slider"></span>
+                </label>
+            </div>
+        </div>
+        
+        <div class="mobile-controls">
+            <div class="mobile-btn up" id="upBtn"><i class="fas fa-arrow-up"></i></div>
+            <div class="mobile-btn down" id="downBtn"><i class="fas fa-arrow-down"></i></div>
+            <div class="mobile-btn left" id="leftBtn"><i class="fas fa-arrow-left"></i></div>
+            <div class="mobile-btn right" id="rightBtn"><i class="fas fa-arrow-right"></i></div>
+        </div>
+        
+        <div class="settings-panel">
+            <h2><i class="fas fa-cog"></i> 自定义游戏外观</h2>
+            <div class="upload-container">
+                <div class="upload-group">
+                    <label>蛇头贴图</label>
+                    <div class="preview" id="snakeHeadPreview">
+                        <div class="preview-text">默认</div>
+                    </div>
+                    <div class="upload-btn">
+                        <input type="file" id="snakeHeadUpload" accept="image/*" style="display:none">
+                        <label for="snakeHeadUpload" style="cursor:pointer">上传图片</label>
+                    </div>
+                </div>
+                
+                <div class="upload-group">
+                    <label>蛇身贴图</label>
+                    <div class="preview" id="snakeBodyPreview">
+                        <div class="preview-text">默认</div>
+                    </div>
+                    <div class="upload-btn">
+                        <input type="file" id="snakeBodyUpload" accept="image/*" style="display:none">
+                        <label for="snakeBodyUpload" style="cursor:pointer">上传图片</label>
+                    </div>
+                </div>
+                
+                <div class="upload-group">
+                    <label>食物贴图</label>
+                    <div class="preview" id="foodPreview">
+                        <div class="preview-text">默认</div>
+                    </div>
+                    <div class="upload-btn">
+                        <input type="file" id="foodUpload" accept="image/*" style="display:none">
+                        <label for="foodUpload" style="cursor:pointer">上传图片</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 使用DOMContentLoaded确保DOM加载完成 -->
+    <script>
+        // 全局初始化函数
+        function initializeGame() {
+            // 检查依赖是否就绪
+            const dependencies = [
+                'settings', 'input', 'drawing', 'game'
+            ];
+            
+            let allLoaded = true;
+            dependencies.forEach(dep => {
+                if (!window[dep]) {
+                    console.error(`模块 ${dep} 未加载!`);
+                    allLoaded = false;
+                }
+            });
+            
+            if (!allLoaded) {
+                console.error("部分模块加载失败，无法初始化游戏");
+                return;
+            }
+            
+            // 按顺序执行初始化
+            try {
+                settings.setup();
+                drawing.init();
+                input.setup();
+                game.init();
+            } catch (e) {
+                console.error("游戏初始化失败:", e);
+            }
+        }
+        
+        // 页面完全加载后初始化游戏
+        if (document.readyState === 'complete') {
+            initializeGame();
+        } else {
+            document.addEventListener('DOMContentLoaded', initializeGame);
+        }
+    </script>
+    
+    <!-- 按依赖顺序加载脚本 -->
+    <script src="js/settings.js"></script>
+    <script src="js/drawing.js"></script>
+    <script src="js/input.js"></script>
+    <script src="js/game.js"></script>
 </body>
 </html>
