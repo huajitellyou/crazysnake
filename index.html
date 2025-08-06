@@ -96,10 +96,11 @@
             border-radius: 15px;
             overflow: hidden;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            background: rgba(0, 20, 40, 0.85);
         }
         
         #gameCanvas {
-            background: rgba(0, 20, 40, 0.85);
+            background: transparent;
             width: 100%;
             height: 100%;
             display: block;
@@ -532,37 +533,84 @@
             let snakeBodyImg = null;
             let foodImg = null;
             
-            // 默认绘制函数
+            // 默认绘制函数 - 优化版本
             function drawDefaultSnakeHead(x, y, width, height) {
+                // 绘制蛇头（三角形）
                 ctx.fillStyle = '#2e8b57';
                 ctx.beginPath();
-                ctx.ellipse(x + width/2, y + height/2, width/2, height/2, 0, 0, Math.PI * 2);
+                
+                // 根据移动方向绘制三角形
+                if (velocityX === 1) { // 向右
+                    ctx.moveTo(x, y + height/2);
+                    ctx.lineTo(x + width, y);
+                    ctx.lineTo(x + width, y + height);
+                } else if (velocityX === -1) { // 向左
+                    ctx.moveTo(x + width, y + height/2);
+                    ctx.lineTo(x, y);
+                    ctx.lineTo(x, y + height);
+                } else if (velocityY === 1) { // 向下
+                    ctx.moveTo(x + width/2, y);
+                    ctx.lineTo(x, y + height);
+                    ctx.lineTo(x + width, y + height);
+                } else { // 向上（默认）
+                    ctx.moveTo(x + width/2, y + height);
+                    ctx.lineTo(x, y);
+                    ctx.lineTo(x + width, y);
+                }
+                
+                ctx.closePath();
                 ctx.fill();
                 
-                // 眼睛
-                ctx.fillStyle = 'white';
-                ctx.beginPath();
-                ctx.arc(x + width/3, y + height/3, width/8, 0, Math.PI * 2);
-                ctx.arc(x + 2*width/3, y + height/3, width/8, 0, Math.PI * 2);
-                ctx.fill();
-                
-                ctx.fillStyle = 'black';
-                ctx.beginPath();
-                ctx.arc(x + width/3, y + height/3, width/12, 0, Math.PI * 2);
-                ctx.arc(x + 2*width/3, y + height/3, width/12, 0, Math.PI * 2);
-                ctx.fill();
+                // 眼睛（根据移动方向调整位置）
+                const eyeSize = width / 8;
+                if (velocityX === 1 || velocityX === -1) {
+                    // 水平移动时眼睛在两侧
+                    ctx.fillStyle = 'white';
+                    ctx.beginPath();
+                    ctx.arc(x + width - eyeSize*3, y + height/3, eyeSize, 0, Math.PI * 2);
+                    ctx.arc(x + width - eyeSize*3, y + 2*height/3, eyeSize, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    ctx.fillStyle = 'black';
+                    ctx.beginPath();
+                    ctx.arc(x + width - eyeSize*3, y + height/3, eyeSize/1.5, 0, Math.PI * 2);
+                    ctx.arc(x + width - eyeSize*3, y + 2*height/3, eyeSize/1.5, 0, Math.PI * 2);
+                    ctx.fill();
+                } else {
+                    // 垂直移动时眼睛在上下
+                    ctx.fillStyle = 'white';
+                    ctx.beginPath();
+                    ctx.arc(x + width/3, y + height - eyeSize*3, eyeSize, 0, Math.PI * 2);
+                    ctx.arc(x + 2*width/3, y + height - eyeSize*3, eyeSize, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    ctx.fillStyle = 'black';
+                    ctx.beginPath();
+                    ctx.arc(x + width/3, y + height - eyeSize*3, eyeSize/1.5, 0, Math.PI * 2);
+                    ctx.arc(x + 2*width/3, y + height - eyeSize*3, eyeSize/1.5, 0, Math.PI * 2);
+                    ctx.fill();
+                }
             }
             
             function drawDefaultSnakeBody(x, y, width, height, index, total) {
                 // 创建渐变效果 - 从深绿到浅绿
                 const gradient = ctx.createLinearGradient(x, y, x + width, y + height);
-                gradient.addColorStop(0, '#2e8b57');
-                gradient.addColorStop(1, '#3cb371');
+                const gradientValue = 1 - (index / total) * 0.3; // 尾部颜色变浅
+                gradient.addColorStop(0, `hsl(120, 70%, ${25 + gradientValue * 30}%)`);
+                gradient.addColorStop(1, `hsl(120, 70%, ${35 + gradientValue * 30}%)`);
                 
                 ctx.fillStyle = gradient;
                 ctx.beginPath();
                 ctx.roundRect(x, y, width, height, width/4);
                 ctx.fill();
+                
+                // 添加身体分节效果
+                if (index > 0 && index < total - 1) {
+                    ctx.fillStyle = '#1a5e37';
+                    ctx.beginPath();
+                    ctx.roundRect(x + width/4, y + height/4, width/2, height/2, width/8);
+                    ctx.fill();
+                }
             }
             
             function drawDefaultFood(x, y, width, height) {
@@ -579,6 +627,14 @@
                 ctx.lineTo(x + width/3, y + height/6);
                 ctx.lineTo(x + width/2, y + height/3);
                 ctx.fill();
+                
+                // 苹果柄
+                ctx.strokeStyle = '#8B4513';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(x + width/2, y + height/4);
+                ctx.lineTo(x + width/2, y);
+                ctx.stroke();
             }
             
             // 初始化游戏
@@ -656,7 +712,7 @@
             function checkSelfCollision() {
                 const head = snake[0];
                 for (let i = 1; i < snake.length; i++) {
-                    if (snake[i].x === head.x && snake[i].y === head.y) {
+                    if (snake[i].x === head.x && snake[i.y] === head.y) {
                         return true;
                     }
                 }
@@ -693,10 +749,24 @@
                 
                 // 绘制蛇 - 从尾部到头部（确保头部在顶部）
                 for (let i = snake.length - 1; i >= 0; i--) {
-                    // 计算每个身体部分的宽度（从头部到尾部逐渐变窄）
-                    const widthFactor = 0.2 + (0.8 * (i / snake.length));
-                    const segmentWidth = gridSize * widthFactor;
-                    const segmentHeight = gridSize * widthFactor;
+                    // 计算每个身体部分的宽度（头大身匀尾窄）
+                    let segmentWidth, segmentHeight;
+                    
+                    if (i === 0) {
+                        // 头部 - 较大
+                        segmentWidth = gridSize * 0.9;
+                        segmentHeight = gridSize * 0.9;
+                    } else if (i >= snake.length - 3) {
+                        // 尾部 - 逐渐变小
+                        const tailIndex = snake.length - i - 1;
+                        const sizeFactor = 0.7 - tailIndex * 0.1;
+                        segmentWidth = gridSize * sizeFactor;
+                        segmentHeight = gridSize * sizeFactor;
+                    } else {
+                        // 身体部分 - 均匀
+                        segmentWidth = gridSize * 0.8;
+                        segmentHeight = gridSize * 0.8;
+                    }
                     
                     const offsetX = (gridSize - segmentWidth) / 2;
                     const offsetY = (gridSize - segmentHeight) / 2;
@@ -706,205 +776,4 @@
                             ctx.drawImage(snakeHeadImg, 
                                 snake[i].x * gridSize + offsetX, 
                                 snake[i].y * gridSize + offsetY, 
-                                segmentWidth, 
-                                segmentHeight);
-                        } else {
-                            drawDefaultSnakeHead(
-                                snake[i].x * gridSize + offsetX, 
-                                snake[i].y * gridSize + offsetY, 
-                                segmentWidth, 
-                                segmentHeight
-                            );
-                        }
-                    } else { // 蛇身
-                        if (snakeBodyImg) {
-                            ctx.drawImage(snakeBodyImg, 
-                                snake[i].x * gridSize + offsetX, 
-                                snake[i].y * gridSize + offsetY, 
-                                segmentWidth, 
-                                segmentHeight);
-                        } else {
-                            drawDefaultSnakeBody(
-                                snake[i].x * gridSize + offsetX, 
-                                snake[i].y * gridSize + offsetY, 
-                                segmentWidth, 
-                                segmentHeight,
-                                i,
-                                snake.length
-                            );
-                        }
-                    }
-                }
-                
-                updateStats();
-            }
-            
-            // 更新统计信息
-            function updateStats() {
-                document.getElementById('score').textContent = score;
-                document.getElementById('length').textContent = snake.length;
-                document.getElementById('speed').textContent = speedLevel;
-            }
-            
-            // 游戏结束
-            function gameOver() {
-                clearTimeout(gameLoop);
-                isGameRunning = false;
-                document.getElementById('finalScore').textContent = score;
-                document.getElementById('gameOver').style.display = 'flex';
-            }
-            
-            // 键盘控制
-            document.addEventListener('keydown', (e) => {
-                if (!isGameRunning) return;
-                
-                switch(e.key) {
-                    case 'ArrowUp':
-                        if (velocityY !== 1) {
-                            velocityX = 0;
-                            velocityY = -1;
-                        }
-                        break;
-                    case 'ArrowDown':
-                        if (velocityY !== -1) {
-                            velocityX = 0;
-                            velocityY = 1;
-                        }
-                        break;
-                    case 'ArrowLeft':
-                        if (velocityX !== 1) {
-                            velocityX = -1;
-                            velocityY = 0;
-                        }
-                        break;
-                    case 'ArrowRight':
-                        if (velocityX !== -1) {
-                            velocityX = 1;
-                            velocityY = 0;
-                        }
-                        break;
-                }
-            });
-            
-            // 移动端控制
-            document.getElementById('upBtn').addEventListener('click', () => {
-                if (velocityY !== 1 && isGameRunning) {
-                    velocityX = 0;
-                    velocityY = -1;
-                }
-            });
-            
-            document.getElementById('downBtn').addEventListener('click', () => {
-                if (velocityY !== -1 && isGameRunning) {
-                    velocityX = 0;
-                    velocityY = 1;
-                }
-            });
-            
-            document.getElementById('leftBtn').addEventListener('click', () => {
-                if (velocityX !== 1 && isGameRunning) {
-                    velocityX = -1;
-                    velocityY = 0;
-                }
-            });
-            
-            document.getElementById('rightBtn').addEventListener('click', () => {
-                if (velocityX !== -1 && isGameRunning) {
-                    velocityX = 1;
-                    velocityY = 0;
-                }
-            });
-            
-            // 游戏控制按钮
-            document.getElementById('startBtn').addEventListener('click', () => {
-                if (!isGameRunning) {
-                    isGameRunning = true;
-                    isPaused = false;
-                    if (snake.length <= 1) {
-                        initGame();
-                    }
-                    game();
-                }
-            });
-            
-            document.getElementById('pauseBtn').addEventListener('click', () => {
-                if (isGameRunning) {
-                    isPaused = !isPaused;
-                    document.getElementById('pauseBtn').innerHTML = isPaused ? 
-                        '<i class="fas fa-play"></i> 继续' : 
-                        '<i class="fas fa-pause"></i> 暂停';
-                    
-                    if (!isPaused) {
-                        game();
-                    }
-                }
-            });
-            
-            document.getElementById('resetBtn').addEventListener('click', () => {
-                clearTimeout(gameLoop);
-                isGameRunning = false;
-                isPaused = false;
-                initGame();
-                document.getElementById('gameOver').style.display = 'none';
-                document.getElementById('pauseBtn').innerHTML = '<i class="fas fa-pause"></i> 暂停';
-            });
-            
-            document.getElementById('restartBtn').addEventListener('click', () => {
-                document.getElementById('gameOver').style.display = 'none';
-                initGame();
-                isGameRunning = true;
-                isPaused = false;
-                game();
-            });
-            
-            // 速度开关
-            document.getElementById('speedToggle').addEventListener('change', (e) => {
-                speedToggle = e.target.checked;
-            });
-            
-            // 图片上传处理
-            function handleImageUpload(event, previewId) {
-                const file = event.target.files[0];
-                if (file) {
-                    const reader = new FileReader();
-                    reader.onload = function(e) {
-                        const img = new Image();
-                        img.onload = function() {
-                            if (previewId === 'snakeHeadPreview') {
-                                snakeHeadImg = img;
-                            } else if (previewId === 'snakeBodyPreview') {
-                                snakeBodyImg = img;
-                            } else if (previewId === 'foodPreview') {
-                                foodImg = img;
-                            }
-                            
-                            const preview = document.getElementById(previewId);
-                            preview.innerHTML = '';
-                            const previewImg = document.createElement('img');
-                            previewImg.src = e.target.result;
-                            preview.appendChild(previewImg);
-                        };
-                        img.src = e.target.result;
-                    };
-                    reader.readAsDataURL(file);
-                }
-            }
-            
-            document.getElementById('snakeHeadUpload').addEventListener('change', (e) => {
-                handleImageUpload(e, 'snakeHeadPreview');
-            });
-            
-            document.getElementById('snakeBodyUpload').addEventListener('change', (e) => {
-                handleImageUpload(e, 'snakeBodyPreview');
-            });
-            
-            document.getElementById('foodUpload').addEventListener('change', (e) => {
-                handleImageUpload(e, 'foodPreview');
-            });
-            
-            // 初始化游戏
-            initGame();
-        });
-    </script>
-</body>
-</html>
+                                segment
