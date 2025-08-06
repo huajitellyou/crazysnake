@@ -1,3 +1,6 @@
+// 在每个JS文件顶部添加
+document.addEventListener("DOMContentLoaded", () => {
+  // 原文件中的初始化代码（如事件绑定）
 // 游戏状态管理
 class Game {
     constructor() {
@@ -57,3 +60,4 @@ class Game {
         return food;
     }
 }
+});
