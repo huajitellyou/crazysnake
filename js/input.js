@@ -1,3 +1,7 @@
+// 在每个JS文件顶部添加
+document.addEventListener("DOMContentLoaded", () => {
+  // 原文件中的初始化代码（如事件绑定）
+
 // 键盘控制
 document.addEventListener('keydown', e => {
     if(!game.isRunning) return;
@@ -26,4 +30,5 @@ joystick.addEventListener('touchmove', e => {
         else if(angle > 0) game.direction = 'down';
         else game.direction = 'up';
     }
+});
 });
