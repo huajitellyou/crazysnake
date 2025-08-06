@@ -1,66 +1,183 @@
-// game.js 顶部添加
-window.canvas = document.getElementById("gameCanvas");
-window.ctx = canvas.getContext("2d");
-// 在每个JS文件顶部添加
-document.addEventListener("DOMContentLoaded", () => {
-  // 原文件中的初始化代码（如事件绑定）
-// 游戏状态管理
-class Game {
-    constructor() {
-        this.gridSize = 20;
-        this.speed = 150;
+const game = {
+    snake: [],
+    food: {},
+    score: 0,
+    speed: 150,
+    baseSpeed: 150,
+    speedLevel: 5,
+    isPaused: false,
+    gameLoop: null,
+    
+    // 初始化游戏
+    init: function() {
+        try {
+            this.reset();
+            
+            // 生成食物
+            this.generateFood();
+            
+            // 绘制初始状态
+            drawing.draw(this.snake, this.food, this.score, this.snake.length, this.speedLevel);
+            
+            return true;
+        } catch (e) {
+            console.error('游戏初始化失败:', e);
+            return false;
+        }
+    },
+    
+    // 重置游戏状态
+    reset: function() {
+        this.snake = [
+            {x: Math.floor(drawing.tileCount/2), y: Math.floor(drawing.tileCount/2)}
+        ];
         this.score = 0;
-        this.snake = [{x: 10, y: 10}];
-        this.food = this.generateFood();
-        this.direction = 'right';
-    }
-
-    // 移动逻辑（带方向校验）
-    move() {
-        const head = {...this.snake[0]};
-        switch(this.direction) {
-            case 'up': head.y--; break;
-            case 'down': head.y++; break;
-            case 'left': head.x--; break;
-            case 'right': head.x++; break;
+        input.velocityX = 0;
+        input.velocityY = 0;
+        this.speed = this.baseSpeed;
+        this.speedLevel = 5;
+        this.isPaused = false;
+        
+        // 更新UI状态
+        drawing.updateStats(this.score, this.snake.length, this.speedLevel);
+        drawing.hideGameOver();
+    },
+    
+    // 开始游戏
+    start: function() {
+        // 如果游戏已结束，先重置
+        if (this.snake.length <= 1) {
+            this.reset();
         }
         
+        input.isGameRunning = true;
+        
+        // 开始游戏循环
+        this.runGameLoop();
+    },
+    
+    // 运行游戏主循环
+    runGameLoop: function() {
+        clearTimeout(this.gameLoop);
+        
+        this.gameLoop = setTimeout(() => {
+            if (!this.isPaused && input.isGameRunning) {
+                this.update();
+                this.runGameLoop();
+            }
+        }, this.speed);
+    },
+    
+    // 切换暂停状态
+    togglePause: function() {
+        this.isPaused = !this.isPaused;
+        
+        const pauseBtn = document.getElementById('pauseBtn');
+        if (pauseBtn) {
+            pauseBtn.innerHTML = this.isPaused ? 
+                '<i class="fas fa-play"></i> 继续' : 
+                '<i class="fas fa-pause"></i> 暂停';
+        }
+        
+        if (!this.isPaused) {
+            this.runGameLoop();
+        }
+    },
+    
+    // 重新开始游戏
+    restart: function() {
+        this.reset();
+        this.generateFood();
+        input.isGameRunning = true;
+        this.runGameLoop();
+        drawing.hideGameOver();
+    },
+    
+    // 更新游戏状态
+    update: function() {
+        // 移动蛇
+        const head = {x: this.snake[0].x + input.velocityX, y: this.snake[0].y + input.velocityY};
         this.snake.unshift(head);
-        if(head.x === this.food.x && head.y === this.food.y) {
+        
+        // 检查是否吃到食物
+        if (head.x === this.food.x && head.y === this.food.y) {
             this.score += 10;
-            this.food = this.generateFood();
+            
+            // 如果开启了加速模式
+            if (settings.speedToggle && this.speed > 60) {
+                this.speed -= 5;
+                this.speedLevel = Math.max(1, Math.floor((this.baseSpeed - this.speed) / 18) + 1);
+            }
+            
+            this.generateFood();
         } else {
             this.snake.pop();
         }
-    }
-
-    // 碰撞检测（墙和自身）
-    checkCollision() {
-        const head = this.snake[0];
-        // 墙碰撞
-        if(head.x < 0 || head.x >= canvas.width/this.gridSize || 
-           head.y < 0 || head.y >= canvas.height/this.gridSize) {
-            return true;
+        
+        // 检查碰撞
+        if (
+            head.x < 0 || head.x >= drawing.tileCount || 
+            head.y < 0 || head.y >= drawing.tileCount ||
+            this.checkSelfCollision()
+        ) {
+            this.gameOver();
+            return;
         }
-        // 自身碰撞
-        for(let i = 1; i < this.snake.length; i++) {
-            if(head.x === this.snake[i].x && head.y === this.snake[i].y) {
+        
+        // 更新绘制
+        drawing.draw(this.snake, this.food, this.score, this.snake.length, this.speedLevel);
+        drawing.updateStats(this.score, this.snake.length, this.speedLevel);
+    },
+    
+    // 检查蛇是否撞到自己
+    checkSelfCollision: function() {
+        const head = this.snake[0];
+        for (let i = 1; i < this.snake.length; i++) {
+            if (this.snake[i].x === head.x && this.snake[i].y === head.y) {
                 return true;
             }
         }
         return false;
-    }
-
-    // 食物生成（避开蛇身）
-    generateFood() {
+    },
+    
+    // 生成食物
+    generateFood: function() {
         let food;
+        let validPosition = false;
+        let attempts = 0;
+        const maxAttempts = 100; // 防止无限循环
+        
         do {
             food = {
-                x: Math.floor(Math.random() * (canvas.width/this.gridSize)),
-                y: Math.floor(Math.random() * (canvas.height/this.gridSize))
+                x: Math.floor(Math.random() * drawing.tileCount),
+                y: Math.floor(Math.random() * drawing.tileCount)
             };
-        } while(this.snake.some(seg => seg.x === food.x && seg.y === food.y));
-        return food;
+            
+            // 确保食物不会出现在蛇身上
+            validPosition = true;
+            for (let segment of this.snake) {
+                if (segment.x === food.x && segment.y === food.y) {
+                    validPosition = false;
+                    break;
+                }
+            }
+            
+            attempts++;
+        } while (!validPosition && attempts < maxAttempts);
+        
+        this.food = food;
+    },
+    
+    // 游戏结束处理
+    gameOver: function() {
+        clearTimeout(this.gameLoop);
+        input.isGameRunning = false;
+        this.isPaused = false;
+        
+        // 显示游戏结束画面
+        drawing.showGameOver(this.score);
     }
-}
-});
+};
+
+// 暴露到全局
+window.game = game;
