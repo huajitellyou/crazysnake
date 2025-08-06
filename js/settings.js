@@ -1,3 +1,7 @@
+// 在每个JS文件顶部添加
+document.addEventListener("DOMContentLoaded", () => {
+  // 原文件中的初始化代码（如事件绑定）
+
 // 贴图加载系统
 function setupTextureUpload() {
     const uploaders = {
@@ -25,4 +29,5 @@ function setupTextureUpload() {
 // 加速开关
 document.getElementById('speedToggle').addEventListener('change', e => {
     game.speedToggle = e.target.checked;
+});
 });
