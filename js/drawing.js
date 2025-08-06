@@ -1,3 +1,6 @@
+// 在每个JS文件顶部添加
+document.addEventListener("DOMContentLoaded", () => {
+  // 原文件中的初始化代码（如事件绑定）
 // 蛇身绘制（含尾部渐变）
 function drawSnake() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -43,3 +46,4 @@ function drawHead(x, y, size) {
     ctx.arc(x + size*2/3, y + size/3, size/8, 0, Math.PI*2);
     ctx.fill();
 }
+    });
