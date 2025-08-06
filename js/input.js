@@ -114,11 +114,24 @@ const input = {
             const restartBtn = document.getElementById('restartBtn');
             
             if (startBtn) {
-                startBtn.addEventListener('click', () => {
-                    this.isGameRunning = true;
-                    window.game.start();
-                });
-            }
+      // 直接绑定启动函数，绕过模块依赖
+      startBtn.addEventListener('click', () => {
+        console.log("开始按钮被点击");
+        
+        // 尝试获取游戏状态
+        if (!window.game || !window.game.start) {
+          alert("游戏模块未加载，请刷新页面重试");
+          return;
+        }
+        
+        // 如果游戏已结束，先重置
+        if (window.game.snake.length <= 1) {
+          window.game.reset();
+        }
+        
+        window.input.isGameRunning = true;
+        window.game.start();
+      });
             
             if (pauseBtn) {
                 pauseBtn.addEventListener('click', () => {
