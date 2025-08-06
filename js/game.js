@@ -1,3 +1,6 @@
+// game.js 顶部添加
+window.canvas = document.getElementById("gameCanvas");
+window.ctx = canvas.getContext("2d");
 // 在每个JS文件顶部添加
 document.addEventListener("DOMContentLoaded", () => {
   // 原文件中的初始化代码（如事件绑定）
