@@ -115,45 +115,74 @@
     </div>
 
     <!-- 使用DOMContentLoaded确保DOM加载完成 -->
-    <script>
-        // 全局初始化函数
-        function initializeGame() {
-            // 检查依赖是否就绪
-            const dependencies = [
-                'settings', 'input', 'drawing', 'game'
-            ];
-            
-            let allLoaded = true;
-            dependencies.forEach(dep => {
-                if (!window[dep]) {
-                    console.error(`模块 ${dep} 未加载!`);
-                    allLoaded = false;
-                }
-            });
-            
-            if (!allLoaded) {
-                console.error("部分模块加载失败，无法初始化游戏");
-                return;
-            }
-            
-            // 按顺序执行初始化
-            try {
-                settings.setup();
-                drawing.init();
-                input.setup();
-                game.init();
-            } catch (e) {
-                console.error("游戏初始化失败:", e);
-            }
-        }
-        
-        // 页面完全加载后初始化游戏
-        if (document.readyState === 'complete') {
-            initializeGame();
-        } else {
-            document.addEventListener('DOMContentLoaded', initializeGame);
-        }
-    </script>
+<!-- 在 index.html 中找到 JS 加载部分，修改为以下内容 -->
+<script>
+  // 创建全局加载队列
+  window.gameModules = [
+    { name: 'settings', loaded: false, path: 'js/settings.js' },
+    { name: 'drawing', loaded: false, path: 'js/drawing.js' },
+    { name: 'input', loaded: false, path: 'js/input.js' },
+    { name: 'game', loaded: false, path: 'js/game.js' }
+  ];
+
+  // 动态加载JS文件
+  function loadScript(path, onLoad) {
+    return new Promise((resolve) => {
+      const script = document.createElement('script');
+      script.src = path;
+      script.onload = () => {
+        onLoad();
+        resolve();
+      };
+      script.onerror = () => {
+        console.error(`加载失败: ${path}`);
+        resolve();
+      };
+      document.body.appendChild(script);
+    });
+  }
+
+  // 按顺序加载所有模块
+  async function loadGameModules() {
+    for (const module of window.gameModules) {
+      await loadScript(module.path, () => {
+        window[module.name] = window[module.name] || {};
+        module.loaded = true;
+        console.log(`已加载: ${module.name}`);
+      });
+    }
+    initializeGame();
+  }
+
+  // 初始化游戏函数（修复版）
+  function initializeGame() {
+    // 检查所有模块是否加载成功
+    const missingModules = window.gameModules.filter(m => !m.loaded);
+    if (missingModules.length > 0) {
+      console.error("缺少模块: ", missingModules.map(m => m.name).join(', '));
+      alert("游戏加载失败，请刷新页面重试。缺失模块: " + missingModules.map(m => m.name).join(', '));
+      return;
+    }
+    
+    try {
+      // 按顺序初始化所有模块
+      if (settings.setup) settings.setup();
+      if (drawing.init) drawing.init();
+      if (input.setup) input.setup();
+      if (game.init) game.init();
+      
+      console.log("游戏初始化成功");
+    } catch (e) {
+      console.error("游戏初始化失败:", e);
+      alert("游戏初始化失败：" + e.message);
+    }
+  }
+
+  // 页面加载完成后启动游戏
+  window.addEventListener('DOMContentLoaded', loadGameModules);
+</script>
+
+<!-- 删除原来的脚本加载标签 -->
     
     <!-- 按依赖顺序加载脚本 -->
     <script src="js/settings.js"></script>
