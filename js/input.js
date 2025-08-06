@@ -1,34 +1,149 @@
-// 在每个JS文件顶部添加
-document.addEventListener("DOMContentLoaded", () => {
-  // 原文件中的初始化代码（如事件绑定）
+const input = {
+    velocityX: 0,
+    velocityY: 0,
+    isGameRunning: false,
 
-// 键盘控制
-document.addEventListener('keydown', e => {
-    if(!game.isRunning) return;
-    
-    const keyMap = {
-        'ArrowUp': () => game.direction !== 'down' && (game.direction = 'up'),
-        'ArrowDown': () => game.direction !== 'up' && (game.direction = 'down'),
-        'ArrowLeft': () => game.direction !== 'right' && (game.direction = 'left'),
-        'ArrowRight': () => game.direction !== 'left' && (game.direction = 'right')
-    };
-    keyMap[e.key]?.();
-});
+    // 设置事件监听
+    setup: function() {
+        try {
+            // 键盘控制
+            document.addEventListener('keydown', this.handleKeyDown.bind(this));
+            
+            // 移动端控制按钮
+            this.setupMobileControls();
+            
+            // 游戏控制按钮
+            this.setupGameControls();
+            
+            return true;
+        } catch (e) {
+            console.error('输入模块初始化失败:', e);
+            return false;
+        }
+    },
 
-// 触摸控制（虚拟摇杆）
-const joystick = document.getElementById('joystick');
-joystick.addEventListener('touchmove', e => {
-    const touch = e.touches[0];
-    const rect = joystick.getBoundingClientRect();
-    const dx = touch.clientX - rect.left - rect.width/2;
-    const dy = touch.clientY - rect.top - rect.height/2;
-    const angle = Math.atan2(dy, dx);
-    
-    if(Math.abs(dx) > 10 || Math.abs(dy) > 10) {
-        if(Math.abs(angle) < Math.PI/4) game.direction = 'right';
-        else if(Math.abs(angle) > 3*Math.PI/4) game.direction = 'left';
-        else if(angle > 0) game.direction = 'down';
-        else game.direction = 'up';
+    // 键盘事件处理
+    handleKeyDown: function(e) {
+        if (!this.isGameRunning) return;
+        
+        switch(e.key) {
+            case 'ArrowUp':
+                if (this.velocityY !== 1) {
+                    this.velocityX = 0;
+                    this.velocityY = -1;
+                }
+                break;
+            case 'ArrowDown':
+                if (this.velocityY !== -1) {
+                    this.velocityX = 0;
+                    this.velocityY = 1;
+                }
+                break;
+            case 'ArrowLeft':
+                if (this.velocityX !== 1) {
+                    this.velocityX = -1;
+                    this.velocityY = 0;
+                }
+                break;
+            case 'ArrowRight':
+                if (this.velocityX !== -1) {
+                    this.velocityX = 1;
+                    this.velocityY = 0;
+                }
+                break;
+        }
+    },
+
+    // 设置移动端控制
+    setupMobileControls: function() {
+        try {
+            const upBtn = document.getElementById('upBtn');
+            const downBtn = document.getElementById('downBtn');
+            const leftBtn = document.getElementById('leftBtn');
+            const rightBtn = document.getElementById('rightBtn');
+            
+            if (upBtn && downBtn && leftBtn && rightBtn) {
+                // 在移动端显示控制按钮
+                if (window.innerWidth <= 768) {
+                    document.querySelector('.mobile-controls').style.display = 'grid';
+                }
+                
+                upBtn.addEventListener('click', () => {
+                    if (this.velocityY !== 1 && this.isGameRunning) {
+                        this.velocityX = 0;
+                        this.velocityY = -1;
+                    }
+                });
+                
+                downBtn.addEventListener('click', () => {
+                    if (this.velocityY !== -1 && this.isGameRunning) {
+                        this.velocityX = 0;
+                        this.velocityY = 1;
+                    }
+                });
+                
+                leftBtn.addEventListener('click', () => {
+                    if (this.velocityX !== 1 && this.isGameRunning) {
+                        this.velocityX = -1;
+                        this.velocityY = 0;
+                    }
+                });
+                
+                rightBtn.addEventListener('click', () => {
+                    if (this.velocityX !== -1 && this.isGameRunning) {
+                        this.velocityX = 1;
+                        this.velocityY = 0;
+                    }
+                });
+            }
+        } catch (e) {
+            console.error('移动端控制初始化失败:', e);
+        }
+    },
+
+    // 设置游戏控制按钮
+    setupGameControls: function() {
+        try {
+            const startBtn = document.getElementById('startBtn');
+            const pauseBtn = document.getElementById('pauseBtn');
+            const resetBtn = document.getElementById('resetBtn');
+            const restartBtn = document.getElementById('restartBtn');
+            
+            if (startBtn) {
+                startBtn.addEventListener('click', () => {
+                    this.isGameRunning = true;
+                    window.game.start();
+                });
+            }
+            
+            if (pauseBtn) {
+                pauseBtn.addEventListener('click', () => {
+                    if (window.game) {
+                        window.game.togglePause();
+                    }
+                });
+            }
+            
+            if (resetBtn) {
+                resetBtn.addEventListener('click', () => {
+                    if (window.game) {
+                        window.game.reset();
+                    }
+                });
+            }
+            
+            if (restartBtn) {
+                restartBtn.addEventListener('click', () => {
+                    if (window.game) {
+                        window.game.restart();
+                    }
+                });
+            }
+        } catch (e) {
+            console.error('游戏控制初始化失败:', e);
+        }
     }
-});
-});
+};
+
+// 暴露到全局
+window.input = input;
