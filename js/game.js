@@ -1,3 +1,7 @@
+// 确保模块名称与index.html中定义的一致
+window.settings = window.settings || {};
+window.settings.setup = function() {
+  // 原来的setup内容
 const game = {
     snake: [],
     food: {},
