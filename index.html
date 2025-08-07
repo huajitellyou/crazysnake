@@ -1,107 +1,20 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no"/>
-<title>贪吃蛇 · 一键版</title>
-<style>
-:root{--bg:linear-gradient(135deg,#667eea 0%,#764ba2 100%);--panel:rgba(255,255,255,.15);}
-*{margin:0;padding:0;box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;}
-body{height:100vh;display:flex;align-items:center;justify-content:center;background:var(--bg);color:#fff;}
-#gameCard{width:min(92vw,400px);background:var(--panel);backdrop-filter:blur(12px);border-radius:24px;padding:18px;display:flex;flex-direction:column;gap:14px;}
-#scoreBoard{display:flex;justify-content:space-between;font-size:18px;font-weight:700;}
-canvas{width:100%;height:auto;aspect-ratio:1/1;background:rgba(0,0,0,.15);border-radius:16px;}
-.btn{flex:1 1 100px;padding:10px 0;border:none;border-radius:20px;font-size:15px;font-weight:600;background:rgba(255,255,255,.2);color:#fff;cursor:pointer;transition:.3s;}
-.btn:active{transform:scale(.96);}
-.btn.primary{background:#4caf50;}
-.switchWrap{display:flex;align-items:center;gap:6px;font-size:14px;}
-.switch{position:relative;width:46px;height:24px;background:rgba(255,255,255,.3);border-radius:24px;cursor:pointer;}
-.switch.on{background:#4caf50;}
-.switch::after{content:"";position:absolute;top:2px;left:2px;width:20px;height:20px;background:#fff;border-radius:50%;transition:.3s;}
-.switch.on::after{transform:translateX(22px);}
-.fileWrap{display:flex;gap:10px;}
-.fileWrap label{flex:1 1 0;padding:8px 0;text-align:center;font-size:13px;background:rgba(255,255,255,.15);border-radius:14px;cursor:pointer;}
-#touchPad{display:grid;grid-template-areas:". up ." "left . right" ". down .";grid-template-columns:repeat(3,1fr);gap:8px;width:min(200px,60vw);margin:0 auto;}
-.touchBtn{background:rgba(255,255,255,.15);border:none;border-radius:12px;font-size:24px;color:#fff;line-height:50px;cursor:pointer;}
-.touchBtn:active{background:rgba(255,255,255,.3);}
-#overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:999;}
-#overlay>div{background:#fff;color:#333;padding:30px 40px;border-radius:20px;text-align:center;}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>精美贪吃蛇</title>
+    <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-<div id="gameCard">
-  <div id="scoreBoard">
-    <span>得分: <span id="score">0</span></span>
-    <span>速度: <span id="speed">1.0</span>x</span>
-  </div>
-  <canvas id="board" width="320" height="320"></canvas>
-  <button id="startBtn" class="btn primary">开始游戏</button>
-  <div class="switchWrap">加速模式 <div id="speedToggle" class="switch"></div></div>
-  <div class="fileWrap">
-    <label>更换蛇头<input type="file" accept="image/*" id="headInput" hidden></label>
-    <label>更换食物<input type="file" accept="image/*" id="foodInput" hidden></label>
-  </div>
-  <div id="touchPad">
-    <button class="touchBtn" data-dir="up">↑</button>
-    <button class="touchBtn" data-dir="left">←</button>
-    <button class="touchBtn" data-dir="right">→</button>
-    <button class="touchBtn" data-dir="down">↓</button>
-  </div>
-</div>
-<div id="overlay">
-  <div>
-    <h2>游戏结束</h2>
-    <p>得分: <span id="finalScore">0</span></p>
-    <button id="restartBtn" class="btn primary">再来一次</button>
-  </div>
-</div>
-
-<script>
-(() => {
-  const cvs=document.getElementById('board'),ctx=cvs.getContext('2d');
-  const SIZE=cvs.width/16;
-  let snake=[{x:10,y:10}],dir={x:1,y:0},food={x:15,y:15},score=0,speed=1,running=false,loop=null;
-  const apple=new Image();apple.src=`data:image/svg+xml,${encodeURIComponent('<svg viewBox="0 0 100 100"><circle cx="50" cy="55" r="40" fill="#ff5252"/><path d="M50 20c0-10 8-15 8-15s-2 8-8 15z" fill="#4caf50"/></svg>')}`;
-  let headImg=null,foodImg=null;
-
-  function draw(){
-    ctx.clearRect(0,0,cvs.width,cvs.height);
-    ctx.drawImage(foodImg||apple,food.x*SIZE,food.y*SIZE,SIZE,SIZE);
-    snake.forEach((p,i)=>{
-      const s=SIZE-i*1.2,pad=(SIZE-s)/2;
-      ctx.fillStyle=i?`hsl(120,50%,${70-i*5}%)`:'#388e3c';
-      ctx.fillRect(p.x*SIZE+pad,p.y*SIZE+pad,s,s);
-    });
-  }
-  function placeFood(){do{food={x:Math.floor(Math.random()*16),y:Math.floor(Math.random()*16)};}while(snake.some(s=>s.x===food.x&&s.y===food.y));}
-  function tick(){
-    if(!running)return;
-    const head={x:snake[0].x+dir.x,y:snake[0].y+dir.y};
-    if(head.x<0||head.x>=16||head.y<0||head.y>=16||snake.some(s=>s.x===head.x&&s.y===head.y)){
-      running=false;clearInterval(loop);document.getElementById('finalScore').textContent=score;document.getElementById('overlay').style.display='flex';return;
-    }
-    snake.unshift(head);
-    if(head.x===food.x&&head.y===food.y){score+=10;speed+=document.getElementById('speedToggle').classList.contains('on')?.2:0;placeFood();}
-    else snake.pop();
-    document.getElementById('score').textContent=score;document.getElementById('speed').textContent=speed.toFixed(1);
-    draw();
-  }
-  function start(){
-    if(running)return;
-    snake=[{x:10,y:10}];dir={x:1,y:0};score=0;speed=1;placeFood();draw();
-    running=true;loop=setInterval(tick,200);
-    document.getElementById('startBtn').textContent='暂停';
-  }
-  function stop(){running=false;clearInterval(loop);document.getElementById('startBtn').textContent='继续';}
-  document.getElementById('startBtn').addEventListener('click',()=>running?stop():start());
-  document.getElementById('restartBtn').addEventListener('click',()=>{document.getElementById('overlay').style.display='none';start();});
-  document.getElementById('speedToggle').addEventListener('click',e=>e.currentTarget.classList.toggle('on'));
-  document.querySelectorAll('.touchBtn').forEach(b=>b.addEventListener('click',()=>{const d=b.dataset.dir;const m={up:{x:0,y:-1},down:{x:0,y:1},left:{x:-1,y:0},right:{x:1,y:0}};if(m[d]&&Math.abs(m[d].x)!==Math.abs(dir.x))dir.x=m[d].x;if(m[d]&&Math.abs(m[d].y)!==Math.abs(dir.y))dir.y=m[d].y;}));
-  document.addEventListener('keydown',e=>{const k={ArrowUp:{x:0,y:-1},ArrowDown:{x:0,y:1},ArrowLeft:{x:-1,y:0},ArrowRight:{x:1,y:0}}[e.key];if(k){dir.x=k.x;dir.y=k.y;}});
-  document.getElementById('headInput').addEventListener('change',e=>{const f=e.target.files[0];if(f){const u=URL.createObjectURL(f);headImg=new Image();headImg.src=u;}});
-  document.getElementById('foodInput').addEventListener('change',e=>{const f=e.target.files[0];if(f){const u=URL.createObjectURL(f);foodImg=new Image();foodImg.src=u;}});
-  placeFood();draw();
-})();
-</script>
+    <div class="container">
+        <h1>贪吃蛇</h1>
+        <div class="game-info">
+            <div>得分: <span id="score">0</span></div>
+            <button id="startBtn">开始游戏</button>
+        </div>
+        <canvas id="gameCanvas" width="400" height="400"></canvas>
+    </div>
+    <script src="js/game.js"></script>
 </body>
 </html>
