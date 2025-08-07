@@ -94,3 +94,20 @@
         text-align:center;
     }
     #overlay h2{margin-bottom:10px;}
+/* 追加到文件末尾即可 */
+#touchPad{
+    display:grid;
+    grid-template-areas:
+        ". up ."
+        "left . right"
+        ". down .";
+    grid-template-columns:repeat(3,1fr);
+    gap:8px;
+    width:min(200px,60vw);
+    margin:0 auto;
+}
+.touchBtn[data-dir="up"]{grid-area:up;}
+.touchBtn[data-dir="left"]{grid-area:left;}
+.touchBtn[data-dir="right"]{grid-area:right;}
+.touchBtn[data-dir="down"]{grid-area:down;}
+
