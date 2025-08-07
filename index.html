@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no"/>
+  <title>贪吃蛇 · 模块化版</title>
+  <link rel="stylesheet" href="css/style.css"/>
+</head>
+<body>
+  <div id="gameCard">
+    <!-- 结构同以前，但完全没写行内样式 -->
+    <div id="scoreBoard">
+      <span>得分: <span id="score">0</span></span>
+      <span>速度: <span id="speed">1.0</span>x</span>
+    </div>
+    <canvas id="board" width="320" height="320"></canvas>
+
+    <button id="startBtn" class="btn primary">开始游戏</button>
+
+    <div class="switchWrap">
+      加速模式 <div id="speedToggle" class="switch"></div>
+    </div>
+
+    <div class="fileWrap">
+      <label>更换蛇头<input type="file" accept="image/*" id="headInput" hidden></label>
+      <label>更换食物<input type="file" accept="image/*" id="foodInput" hidden></label>
+    </div>
+
+    <div id="touchPad">
+      <button class="touchBtn" data-dir="up">↑</button>
+      <button class="touchBtn" data-dir="left">←</button>
+      <button class="touchBtn" data-dir="right">→</button>
+      <button class="touchBtn" data-dir="down">↓</button>
+    </div>
+  </div>
+
+  <div id="overlay">
+    <div>
+      <h2>游戏结束</h2>
+      <p>得分: <span id="finalScore">0</span></p>
+      <button id="restartBtn" class="btn primary">再来一次</button>
+    </div>
+  </div>
+
+  <!-- 按模块顺序加载 -->
+  <script type="module">
+    import { initGame } from './js/game.js';
+    initGame();        // 入口
+  </script>
+</body>
+</html>
