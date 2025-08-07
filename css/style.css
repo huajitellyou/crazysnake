@@ -1,113 +1,70 @@
-    :root{
-        --bg:linear-gradient(135deg,#667eea 0%,#764ba2 100%);
-        --panel-bg:rgba(255,255,255,.15);
-        --panel-border:rgba(255,255,255,.25);
-        --accent:#4caf50;
-        --danger:#f44336;
-    }
-    *{margin:0;padding:0;box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans",sans-serif;}
-    body{
-        height:100vh;display:flex;align-items:center;justify-content:center;
-        background:var(--bg);color:#fff;overflow:hidden;
-    }
-    #gameCard{
-        width:min(92vw,400px);
-        background:var(--panel-bg);
-        backdrop-filter:blur(12px);
-        border:1px solid var(--panel-border);
-        border-radius:24px;
-        padding:18px;
-        box-shadow:0 12px 30px rgba(0,0,0,.25);
-        display:flex;flex-direction:column;gap:14px;
-    }
-    #scoreBoard{
-        display:flex;justify-content:space-between;
-        font-size:18px;font-weight:700;
-    }
-    canvas{
-        width:100%;height:100%;aspect-ratio:1/1;
-        border-radius:16px;background:rgba(0,0,0,.15);
-    }
-    .row{
-        display:flex;gap:10px;justify-content:space-between;align-items:center;
-        flex-wrap:wrap;
-    }
-    .btn{
-        flex:1 1 100px;
-        padding:10px 0;
-        border:none;border-radius:20px;
-        font-size:15px;font-weight:600;
-        background:rgba(255,255,255,.2);
-        color:#fff;cursor:pointer;
-        transition:.3s;
-    }
-    .btn:active{transform:scale(.96);}
-    .btn.primary{background:var(--accent);}
-    .switchWrap{user-select:none;display:flex;align-items:center;gap:6px;font-size:14px;}
-    .switch{
-        position:relative;width:46px;height:24px;
-        background:rgba(255,255,255,.3);
-        border-radius:24px;cursor:pointer;
-    }
-    .switch.on{background:var(--accent);}
-    .switch::after{
-        content:"";position:absolute;
-        top:2px;left:2px;width:20px;height:20px;
-        background:#fff;border-radius:50%;transition:.3s;
-    }
-    .switch.on::after{transform:translateX(22px);}
-    .fileWrap{display:flex;gap:10px;}
-    .fileWrap label{
-        flex:1 1 0;
-        padding:8px 0;
-        text-align:center;
-        font-size:13px;
-        background:rgba(255,255,255,.15);
-        border-radius:14px;cursor:pointer;
-    }
-    #touchPad{
-        display:grid;
-        grid-template-columns:repeat(3,1fr);
-        grid-template-rows:repeat(3,1fr);
-        gap:8px;
-        width:min(200px,60vw);
-        margin:0 auto;
-        user-select:none;
-    }
-    .touchBtn{
-        background:rgba(255,255,255,.15);
-        border:none;border-radius:12px;
-        font-size:24px;color:#fff;
-        line-height:50px;cursor:pointer;
-    }
-    .touchBtn:active{background:rgba(255,255,255,.3);}
-    #overlay{
-        position:fixed;inset:0;
-        background:rgba(0,0,0,.6);
-        display:none;align-items:center;justify-content:center;
-        z-index:999;
-    }
-    #overlay>div{
-        background:#fff;color:#333;
-        padding:30px 40px;
-        border-radius:20px;
-        text-align:center;
-    }
-    #overlay h2{margin-bottom:10px;}
-/* 追加到文件末尾即可 */
-#touchPad{
-    display:grid;
-    grid-template-areas:
-        ". up ."
-        "left . right"
-        ". down .";
-    grid-template-columns:repeat(3,1fr);
-    gap:8px;
-    width:min(200px,60vw);
-    margin:0 auto;
+body {
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background: linear-gradient(135deg, #6e8efb, #a777e3);
+    font-family: Arial, sans-serif;
 }
-.touchBtn[data-dir="up"]{grid-area:up;}
-.touchBtn[data-dir="left"]{grid-area:left;}
-.touchBtn[data-dir="right"]{grid-area:right;}
-.touchBtn[data-dir="down"]{grid-area:down;}
 
+.container {
+    text-align: center;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 20px;
+    border-radius: 15px;
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.2);
+    backdrop-filter: blur(10px);
+}
+
+h1 {
+    color: white;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+    margin-bottom: 10px;
+}
+
+.game-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    color: white;
+    font-size: 18px;
+}
+
+#startBtn {
+    padding: 10px 20px;
+    font-size: 16px;
+    background-color: #ff6b6b;
+    border: none;
+    border-radius: 5px;
+    color: white;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+#startBtn:hover {
+    background-color: #ff8787;
+}
+
+#gameCanvas {
+    border: 2px solid #fff;
+    border-radius: 10px;
+    background-color: rgba(0, 0, 0, 0.1);
+}
+
+/* 响应式设计 */
+@media (max-width: 500px) {
+    #gameCanvas {
+        width: 300px;
+        height: 300px;
+    }
+
+    .container {
+        padding: 10px;
+    }
+
+    h1 {
+        font-size: 24px;
+    }
+}
