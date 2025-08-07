@@ -20,3 +20,4 @@ function stopGame(){
 
 export { startGame, stopGame };   // 导出给 ui.js 用
 initUI(startGame, stopGame);      // 初始化 UI 事件
+
